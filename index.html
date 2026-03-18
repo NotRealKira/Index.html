@@ -1294,7 +1294,7 @@ function showOwnerModal(name, email, avatar) {
     let maskedEmail = 'No email';
     if (email) {
         const maxVisible = 4;
-        maskedEmail = email.slice(0, maxVisible) + ' *****';
+        maskedEmail = email.slice(0, maxVisible) + ' *************************';
     }
     document.getElementById('ownerEmail').textContent = maskedEmail;
 
