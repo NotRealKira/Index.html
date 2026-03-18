@@ -794,6 +794,16 @@ function isAdmin() {
     return user && user.email === ADMIN_EMAIL;
 }
 
+// ── Error Handler ─────────────────────────────────────────────────────────────
+function getErrorMsg(e) {
+    if (!e) return 'Unknown error';
+    if (typeof e === 'string') return e;
+    if (e.message) return e.message;
+    if (e.error?.message) return e.error.message;
+    if (e.msg) return e.msg;
+    return 'Unknown error';
+}
+
 // ── Notifications ─────────────────────────────────────────────────────────────
 function showNotif(msg, type='info') {
     const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
@@ -801,12 +811,7 @@ function showNotif(msg, type='info') {
     if (!box) return;
     const el  = document.createElement('div');
     el.className = `notification ${type}`;
-    // Handle error objects properly
-    let msgStr = msg;
-    if (msg && typeof msg === 'object') {
-        msgStr = msg.message || msg.error?.message || JSON.stringify(msg);
-    }
-    el.textContent = (icons[type]||'') + ' ' + msgStr;
+    el.textContent = (icons[type]||'') + ' ' + msg;
     box.appendChild(el);
     requestAnimationFrame(() => el.classList.add('show'));
     setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4000);
@@ -1021,7 +1026,7 @@ async function uploadBuild(event) {
 
         showNotif('Build uploaded!', 'success');
         loadAllAndRender();
-    } catch(e) { showNotif(String(e), 'error'); }
+    } catch(e) { showNotif(getErrorMsg(e), 'error'); }
     btn.disabled = false; btn.textContent = '📤 Upload Build';
     return false;
 }
@@ -1053,7 +1058,7 @@ async function uploadSell(event) {
         document.getElementById('sellImgLabel').innerHTML = '<span class="file-icon">🖼️</span><span class="file-text">Choose Roblox Screenshot...</span><span class="file-badge">Required</span>';
         showNotif('Listed!', 'success');
         loadAllAndRender();
-    } catch(e) { showNotif(String(e), 'error'); }
+    } catch(e) { showNotif(getErrorMsg(e), 'error'); }
     btn.disabled = false; btn.textContent = '🏷️ List for Sale';
     return false;
 }
@@ -1084,7 +1089,7 @@ async function uploadTrade(event) {
         document.getElementById('tradeImgLabel').innerHTML = '<span class="file-icon">🖼️</span><span class="file-text">Choose Roblox Screenshot...</span><span class="file-badge">Required</span>';
         showNotif('Trade posted!', 'success');
         loadAllAndRender();
-    } catch(e) { showNotif(String(e), 'error'); }
+    } catch(e) { showNotif(getErrorMsg(e), 'error'); }
     btn.disabled = false; btn.textContent = '🔄 Post Trade';
     return false;
 }
@@ -1177,7 +1182,7 @@ async function delItem(id) {
         loadMyUploads();
         loadAllAndRender();
     } catch(e) {
-        showNotif(String(e), 'error');
+        showNotif(getErrorMsg(e), 'error');
     }
 }
 
@@ -1190,7 +1195,7 @@ async function adminDeleteItem(id, ownerEmail) {
         showNotif('Item deleted by admin!', 'success');
         loadAllAndRender();
     } catch(e) {
-        showNotif(String(e), 'error');
+        showNotif(getErrorMsg(e), 'error');
     }
 }
 
@@ -1215,7 +1220,7 @@ async function adminBanUser(email, name) {
         showNotif(`User ${name} has been banned!`, 'success');
         loadAllAndRender();
     } catch(e) {
-        showNotif(String(e), 'error');
+        showNotif(getErrorMsg(e), 'error');
     }
 }
 
@@ -1274,7 +1279,7 @@ async function updateProfilePicture() {
         document.getElementById('pfpImgWrapper').classList.remove('has-file');
         
         showNotif('Profile picture updated!', 'success');
-    } catch(e) { showNotif(String(e), 'error'); }
+    } catch(e) { showNotif(getErrorMsg(e), 'error'); }
     btn.disabled = false; btn.textContent = '🖼️ Update Profile Picture';
 }
 
