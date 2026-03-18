@@ -636,7 +636,7 @@
         <div id="buildLoginWarning" class="login-required-warning" style="display:none;">
             ⚠️ You must login with Gmail to upload builds
         </div>
-        <form class="upload-form" id="buildForm">
+        <form class="upload-form" id="buildForm" onsubmit="return uploadBuild(event)">
             <div class="form-group">
                 <label>Preview (Roblox Screenshot Only — Optional)</label>
                 <div class="file-input-wrapper" id="buildImgWrapper">
@@ -671,7 +671,7 @@
         <div id="sellLoginWarning" class="login-required-warning" style="display:none;">
             ⚠️ You must login with Gmail to list items for sale
         </div>
-        <form class="upload-form" id="sellForm">
+        <form class="upload-form" id="sellForm" onsubmit="return uploadSell(event)">
             <div class="form-group">
                 <label>Preview Image (Roblox Only) *</label>
                 <div class="file-input-wrapper" id="sellImgWrapper">
@@ -696,7 +696,7 @@
         <div id="tradeLoginWarning" class="login-required-warning" style="display:none;">
             ⚠️ You must login with Gmail to post trades
         </div>
-        <form class="upload-form" id="tradeForm">
+        <form class="upload-form" id="tradeForm" onsubmit="return uploadTrade(event)">
             <div class="form-group">
                 <label>Preview Image (Roblox Only) *</label>
                 <div class="file-input-wrapper" id="tradeImgWrapper">
@@ -721,10 +721,10 @@
             <div class="script-main">
                 <h2 style="font-size: 2.2em; margin-bottom: 20px; background: linear-gradient(135deg, #00d4ff, #5b8bf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">LexusHub Script</h2>
                 <p style="color: var(--text2); font-size: 1.05em; line-height: 1.8; margin-bottom: 20px;">
-                    Get the LexusHub Script .
+                    Get the LexusHub Script for Roblox. This script is designed to enhance your gameplay experience with powerful features and seamless integration.
                 </p>
                 <p style="color: var(--text2); font-size: 1.05em; line-height: 1.8; margin-bottom: 20px;">
-                    copy the loadstring below and paste it into your Roblox executor. .
+                    Simply copy the loadstring below and paste it into your Roblox executor. The script will automatically load and initialize.
                 </p>
                 <div class="loadstring-box" id="loadstringBox">
                     <button onclick="copyLoadstring()">📋 Copy</button>
@@ -757,6 +757,20 @@
                 <h3>Display Name</h3>
                 <input type="text" id="usernameInput" class="username-input" placeholder="Enter your display name...">
                 <button onclick="saveUsername()" style="width: 100%; margin-top: 10px;">💾 Save Display Name</button>
+            </div>
+
+            <div class="settings-card">
+                <h3>Profile Picture</h3>
+                <p style="margin-bottom: 15px; color: var(--text2);">Select a Roblox screenshot for your profile picture:</p>
+                <div class="file-input-wrapper" id="pfpImgWrapper">
+                    <input type="file" id="pfpImg" accept="image/*" onchange="updateFileLabel(this,'pfpImgWrapper','pfpImgLabel','🖼️','Choose Roblox Screenshot...')">
+                    <div class="custom-file-label" id="pfpImgLabel">
+                        <span class="file-icon">🖼️</span>
+                        <span class="file-text">Choose Roblox Screenshot...</span>
+                        <span class="file-badge">Optional</span>
+                    </div>
+                </div>
+                <button onclick="updateProfilePicture()" style="width: 100%; margin-top: 10px;">🖼️ Update Profile Picture</button>
             </div>
         </div>
 
@@ -800,24 +814,24 @@
         </p>
         <div class="why-grid">
             <div class="why-card">
-                <div class="why-icon">🟣</div>
-                <div class="why-title">Temporary Key</div>
-                <div class="why-desc">Boost, Temporary,.</div>
+                <div class="why-icon">📤</div>
+                <div class="why-title">Upload</div>
+                <div class="why-desc">Upload your builds, scripts, and items completely free.</div>
             </div>
             <div class="why-card">
                 <div class="why-icon">💰</div>
-                <div class="why-title">50 Robux</div>
-                <div class="why-desc">50 Robux for 10 days Key.</div>
+                <div class="why-title">Sell</div>
+                <div class="why-desc">List items for sale and keep 100% of your earnings.</div>
             </div>
             <div class="why-card">
-                <div class="why-icon">💸</div>
-                <div class="why-title">lifeTime</div>
-                <div class="why-desc">650 robux.</div>
+                <div class="why-icon">🔄</div>
+                <div class="why-title">Trade</div>
+                <div class="why-desc">Trade items with other users at no cost.</div>
             </div>
             <div class="why-card">
-                <div class="why-icon">🗝️</div>
-                <div class="why-title">Freemium Online key Coming Soon</div>
-                <div class="why-desc">Coming soon! Dm if u want to Buy it early: Devil06723.</div>
+                <div class="why-icon">⭐</div>
+                <div class="why-title">Premium</div>
+                <div class="why-desc">Coming soon! Premium features to enhance your experience.</div>
             </div>
         </div>
     </div>
@@ -1050,8 +1064,9 @@ async function deleteItem(id) {
 }
 
 // ── Upload Handlers ───────────────────────────────────────────────────────────
-async function uploadBuild() {
-    if (!user) { showNotif('Login first', 'warning'); switchTab('profile'); return; }
+async function uploadBuild(event) {
+    event.preventDefault();
+    if (!user) { showNotif('Login first', 'warning'); switchTab('profile'); return false; }
     const btn = document.getElementById('buildBtn');
     btn.disabled = true; btn.textContent = '⏳ Uploading...';
     try {
@@ -1093,10 +1108,12 @@ async function uploadBuild() {
         loadAllAndRender();
     } catch(e) { showNotif(String(e), 'error'); }
     btn.disabled = false; btn.textContent = '📤 Upload Build';
+    return false;
 }
 
-async function uploadSell() {
-    if (!user) { showNotif('Login first', 'warning'); switchTab('profile'); return; }
+async function uploadSell(event) {
+    event.preventDefault();
+    if (!user) { showNotif('Login first', 'warning'); switchTab('profile'); return false; }
     const btn = document.getElementById('sellBtn');
     btn.disabled = true; btn.textContent = '⏳ Uploading...';
     try {
@@ -1126,10 +1143,12 @@ async function uploadSell() {
         loadAllAndRender();
     } catch(e) { showNotif(String(e), 'error'); }
     btn.disabled = false; btn.textContent = '🏷️ List for Sale';
+    return false;
 }
 
-async function uploadTrade() {
-    if (!user) { showNotif('Login first', 'warning'); switchTab('profile'); return; }
+async function uploadTrade(event) {
+    event.preventDefault();
+    if (!user) { showNotif('Login first', 'warning'); switchTab('profile'); return false; }
     const btn = document.getElementById('tradeBtn');
     btn.disabled = true; btn.textContent = '⏳ Uploading...';
     try {
@@ -1158,6 +1177,7 @@ async function uploadTrade() {
         loadAllAndRender();
     } catch(e) { showNotif(String(e), 'error'); }
     btn.disabled = false; btn.textContent = '🔄 Post Trade';
+    return false;
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -1265,6 +1285,44 @@ function copyLoadstring() {
     });
 }
 
+// ── Profile Picture ──────────────────────────────────────────────────────────────
+async function updateProfilePicture() {
+    if (!user) { showNotif('Login first', 'warning'); return; }
+    const img = document.getElementById('pfpImg').files[0];
+    if (!img) { showNotif('Please select an image', 'warning'); return; }
+    
+    const btn = event.target;
+    btn.disabled = true; btn.textContent = '⏳ Uploading...';
+    try {
+        showNotif('Checking Roblox screenshot...', 'info');
+        const valid = await isRobloxImage(img);
+        if (!valid) throw 'Image rejected: not a Roblox screenshot';
+        const imgUrl = await uploadCloud(img);
+        
+        // Update user metadata with new profile picture
+        const { error } = await sb.auth.updateUser({
+            user_metadata: {
+                ...user.user_metadata,
+                picture: imgUrl
+            }
+        });
+        
+        if (error) throw error;
+        
+        // Update local user object
+        user.user_metadata.picture = imgUrl;
+        renderAuth();
+        
+        // Clear file input
+        document.getElementById('pfpImg').value = '';
+        document.getElementById('pfpImgLabel').innerHTML = '<span class="file-icon">🖼️</span><span class="file-text">Choose Roblox Screenshot...</span><span class="file-badge">Optional</span>';
+        document.getElementById('pfpImgWrapper').classList.remove('has-file');
+        
+        showNotif('Profile picture updated!', 'success');
+    } catch(e) { showNotif(String(e), 'error'); }
+    btn.disabled = false; btn.textContent = '🖼️ Update Profile Picture';
+}
+
 // ── Owner Modal ───────────────────────────────────────────────────────────────
 function showOwnerModal(name, email, avatar) {
     document.getElementById('ownerName').textContent = name || 'Unknown';
@@ -1300,5 +1358,5 @@ window.addEventListener('load', () => {
 });
 </script>
 
-</body>
+</body
 </html>
