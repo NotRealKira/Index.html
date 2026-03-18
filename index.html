@@ -1018,22 +1018,10 @@ function saveUsername() {
     showNotif('Display name saved!', 'success');
 }
 
-// ── Roblox Image Scanner ──────────────────────────────────────────────────────
-async function isRobloxImage(file) {
-    const fn = file.name.toLowerCase();
-    if (fn.includes('roblox') || fn.includes('com_roblox')) return true;
-    return new Promise(resolve => {
-        const rd = new FileReader();
-        rd.onload = e => {
-            try {
-                const arr = new Uint8Array(e.target.result);
-                const txt = new TextDecoder('utf-8', { fatal: false }).decode(arr);
-                const markers = ['com.roblox.client','com_roblox_client','com.roblox','RobloxPlayerBeta'];
-                resolve(markers.some(m => txt.includes(m)));
-            } catch { resolve(false); }
-        };
-        rd.readAsArrayBuffer(file.slice(0, 131072));
-    });
+// ── Admin Check ──────────────────────────────────────────────────────────────────
+const ADMIN_EMAIL = 'amd156935@gmail.com';
+function isAdmin() {
+    return user && user.email === ADMIN_EMAIL;
 }
 
 // ── Cloudinary ────────────────────────────────────────────────────────────────
@@ -1079,9 +1067,6 @@ async function uploadBuild(event) {
 
         let imgUrl = null;
         if (img) {
-            showNotif('Checking Roblox screenshot...', 'info');
-            const valid = await isRobloxImage(img);
-            if (!valid) throw 'Image rejected: not a Roblox screenshot';
             imgUrl = await uploadCloud(img);
         }
 
@@ -1119,9 +1104,6 @@ async function uploadSell(event) {
     try {
         const img = document.getElementById('sellImg').files[0];
         if (!img) throw 'Need preview image';
-        showNotif('Checking Roblox screenshot...', 'info');
-        const valid = await isRobloxImage(img);
-        if (!valid) throw 'Image rejected: not a Roblox screenshot';
         const imgUrl = await uploadCloud(img);
         await insert({
             type: 'sell',
@@ -1154,9 +1136,6 @@ async function uploadTrade(event) {
     try {
         const img = document.getElementById('tradeImg').files[0];
         if (!img) throw 'Need preview image';
-        showNotif('Checking Roblox screenshot...', 'info');
-        const valid = await isRobloxImage(img);
-        if (!valid) throw 'Image rejected: not a Roblox screenshot';
         const imgUrl = await uploadCloud(img);
         await insert({
             type: 'trade',
@@ -1186,6 +1165,10 @@ function esc(s) {
 }
 
 function cardHTML(item, showDelete) {
+    const isAdminUser = isAdmin();
+    const adminDeleteBtn = isAdminUser ? `<button class="btn btn-red" onclick="adminDeleteItem('${item.id}', '${esc(item.owner_email)}')">🗑️ Delete (Admin)</button>` : '';
+    const adminBanBtn = isAdminUser ? `<button class="btn btn-red" onclick="adminBanUser('${esc(item.owner_email)}', '${esc(item.owner_name)}')">🚫 Ban User (Admin)</button>` : '';
+    
     return `
         <div class="image-card">
             <div class="preview-wrapper">
@@ -1204,6 +1187,8 @@ function cardHTML(item, showDelete) {
                 <div class="upload-date">Uploaded ${new Date(item.upload_date).toLocaleDateString()}</div>
                 ${item.build_file_url ? `<button class="btn btn-green" onclick="window.open('${item.build_file_url}','_blank')">📥 Download</button>` : ''}
                 ${showDelete ? `<button class="btn btn-red" onclick="delItem('${item.id}')">🗑️ Delete</button>` : ''}
+                ${adminDeleteBtn}
+                ${adminBanBtn}
             </div>
         </div>
     `;
@@ -1254,6 +1239,46 @@ async function delItem(id) {
     }
 }
 
+// ── Admin Functions ──────────────────────────────────────────────────────────────
+async function adminDeleteItem(id, ownerEmail) {
+    if (!isAdmin()) { showNotif('Admin access denied', 'error'); return; }
+    if (!confirm(`Delete this item by ${ownerEmail}?`)) return;
+    try {
+        await deleteItem(id);
+        showNotif('Item deleted by admin!', 'success');
+        loadAllAndRender();
+    } catch(e) {
+        showNotif(String(e), 'error');
+    }
+}
+
+async function adminBanUser(email, name) {
+    if (!isAdmin()) { showNotif('Admin access denied', 'error'); return; }
+    if (!confirm(`Ban user ${name} (${email})? All their uploads will be deleted.`)) return;
+    try {
+        // Delete all items by this user
+        const { data: items } = await sb.from('builds').select('id').eq('owner_email', email);
+        if (items && items.length > 0) {
+            for (const item of items) {
+                await deleteItem(item.id);
+            }
+        }
+        
+        // Store banned user in a banned_users table (you may need to create this table)
+        await sb.from('banned_users').insert([{
+            email: email,
+            name: name,
+            banned_date: new Date().toISOString(),
+            banned_by: user.email
+        }]).catch(() => {}); // Ignore if table doesn't exist
+        
+        showNotif(`User ${name} has been banned!`, 'success');
+        loadAllAndRender();
+    } catch(e) {
+        showNotif(String(e), 'error');
+    }
+}
+
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -1281,11 +1306,7 @@ function copyLoadstring() {
     navigator.clipboard.writeText(text).then(() => {
         showNotif('Loadstring copied!', 'success');
     }).catch(() => {
-        prompt('Copy this loadstring:', text);
-    });
-}
-
-// ── Profile Picture ──────────────────────────────────────────────────────────────
+        prompt('Copy this load// ── Profile Picture ──────────────────────────────────────────────────────────────
 async function updateProfilePicture() {
     if (!user) { showNotif('Login first', 'warning'); return; }
     const img = document.getElementById('pfpImg').files[0];
@@ -1294,15 +1315,7 @@ async function updateProfilePicture() {
     const btn = event.target;
     btn.disabled = true; btn.textContent = '⏳ Uploading...';
     try {
-        showNotif('Checking Roblox screenshot...', 'info');
-        const valid = await isRobloxImage(img);
-        if (!valid) throw 'Image rejected: not a Roblox screenshot';
-        const imgUrl = await uploadCloud(img);
-        
-        // Update user metadata with new profile picture
-        const { error } = await sb.auth.updateUser({
-            user_metadata: {
-                ...user.user_metadata,
+        const imgUrl = await uploadCloud(img);                ...user.user_metadata,
                 picture: imgUrl
             }
         });
@@ -1358,5 +1371,5 @@ window.addEventListener('load', () => {
 });
 </script>
 
-</body
+</body>
 </html>
