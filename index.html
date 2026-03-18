@@ -1289,13 +1289,22 @@ async function updateProfilePicture() {
 // ── Owner Modal ───────────────────────────────────────────────────────────────
 function showOwnerModal(name, email, avatar) {
     document.getElementById('ownerName').textContent = name || 'Unknown';
-    document.getElementById('ownerEmail').textContent = email || 'No email';
+
+    // Show first 4 characters of email then mask with *****
+    let maskedEmail = 'No email';
+    if (email) {
+        const maxVisible = 4;
+        maskedEmail = email.slice(0, maxVisible) + ' *****';
+    }
+    document.getElementById('ownerEmail').textContent = maskedEmail;
+
     const avatarEl = document.getElementById('ownerAvatar');
     if (avatar) {
         avatarEl.innerHTML = `<img src="${avatar}" onerror="this.style.display='none'">`;
     } else {
         avatarEl.innerHTML = '<span>?</span>';
     }
+
     const modal = document.getElementById('ownerModal');
     modal.classList.add('show');
     modal.style.display = 'flex';
